@@ -49,10 +49,22 @@ public class RPCServer {
 		   // - invoke the method and pass the param
 		   // - encapsulate return value 
 		   // - send back the message containing the RPC reply
-			
-		   if (true)
-				throw new UnsupportedOperationException(TODO.method());
-		   
+            requestmsg = connection.receive();
+            byte[] rpcmsg = requestmsg.getData();
+
+            rpcid = rpcmsg[0];
+            byte[] param = RPCUtils.decapsulate(rpcmsg);
+
+            RPCRemoteImpl impl = services.get(rpcid);
+            if (impl == null) {
+                throw new IllegalStateException("No RPC service registered for rpcid=" + rpcid);
+            }
+
+            byte[] retval = impl.invoke(param);
+
+            byte[] replyrpcmsg = RPCUtils.encapsulate(rpcid, retval);
+            replymsg = new Message(replyrpcmsg);
+            connection.send(replymsg);
 		   // TODO - END
 
 			// stop the server if it was stop methods that was called
